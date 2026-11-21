@@ -1,0 +1,16 @@
+{
+  "name": "Kuxtal Health - Ecosistema Clínico y Emergencias",
+  "short_name": "Kuxtal SOS",
+  "description": "Ficha vital híbrida offline-first y triaje asistido por IA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
