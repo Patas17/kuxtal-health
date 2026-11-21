@@ -161,6 +161,8 @@ def primeros_auxilios(uuid: str, req: EmergenciaAuxilioRequest, session: Session
         perfil=usuario,
         bitacora=bitacora_reciente,
     )
+    if "nota_critica" not in guia and "alerta_critica" in guia:
+        guia["nota_critica"] = guia["alerta_critica"]
     return guia
 
 
@@ -206,6 +208,11 @@ def realizar_triaje(uuid: str, req: TriajeRequest, session: Session = Depends(ge
         usuario_id=nuevo_triaje.usuario_id,
         sintomas_actuales=nuevo_triaje.sintomas_actuales,
         nivel_semaforo=nuevo_triaje.nivel_semaforo,
+        posible_interaccion=resultado_ia.get("posible_interaccion", ""),
+        pasos_inmediatos=resultado_ia.get("pasos_inmediatos", []),
+        senales_alarma=resultado_ia.get("senales_alarma", []),
+        aviso_legal=resultado_ia.get("aviso_legal", ""),
+        aviso_medico=resultado_ia.get("aviso_legal", ""),
         guia=TriajeDetalle(**resultado_ia),
         fecha=nuevo_triaje.fecha,
     )
@@ -310,6 +317,10 @@ def obtener_resumen_clinico(uuid: str, session: Session = Depends(get_session)):
         bitacora=bitacora,
         triajes=triajes,
     )
+    if "adherencia_porcentaje" not in resumen and "porcentaje_adherencia" in resumen:
+        resumen["adherencia_porcentaje"] = resumen["porcentaje_adherencia"]
+    if "puntos_clave_consulta" not in resumen and "hallazgos_clave" in resumen:
+        resumen["puntos_clave_consulta"] = resumen["hallazgos_clave"]
     return resumen
 
 

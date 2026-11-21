@@ -139,24 +139,34 @@ class TriajeResponse(SQLModel):
     usuario_id: str
     sintomas_actuales: str
     nivel_semaforo: str
-    guia: TriajeDetalle
+    posible_interaccion: Optional[str] = None
+    pasos_inmediatos: Optional[List[str]] = None
+    senales_alarma: Optional[List[str]] = None
+    aviso_legal: Optional[str] = None
+    aviso_medico: Optional[str] = None
+    guia: Optional[TriajeDetalle] = None
     fecha: datetime
 
 
 class EmergenciaAuxilioRequest(SQLModel):
     evento: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
 
 
 class EmergenciaAuxilioResponse(SQLModel):
     hacer: List[str]
     evitar: List[str]
     alerta_critica: str
+    nota_critica: Optional[str] = None
 
 
 class ResumenClinicoResponse(SQLModel):
     resumen_ejecutivo: str
     porcentaje_adherencia: float
     hallazgos_clave: List[str]
+    adherencia_porcentaje: Optional[float] = None
+    puntos_clave_consulta: Optional[List[str]] = None
 
 
 # --- Estudios ---

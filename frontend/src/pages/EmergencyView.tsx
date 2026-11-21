@@ -33,19 +33,31 @@ export const EmergencyView: React.FC = () => {
 
   const [modoOffline, setModoOffline] = useState(!navigator.onLine);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [obteniendoGps, setObteniendoGps] = useState(false);
   const [eventoActivo, setEventoActivo] = useState<string | null>(null);
   const [auxilio, setAuxilio] = useState<AuxilioResultado | null>(null);
   const [cargandoAuxilio, setCargandoAuxilio] = useState(false);
 
-  useEffect(() => {
-    // Capturar GPS al abrir la vista de emergencia
-    if ('geolocation' in navigator) {
+  // Helper para solicitar GPS bajo demanda con promesa
+  const obtenerPosicionGps = (): Promise<{ lat: number; lng: number } | null> => {
+    return new Promise((resolve) => {
+      if (!('geolocation' in navigator)) {
+        resolve(null);
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
-        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => setCoords(null),
-        { enableHighAccuracy: true, timeout: 6000 }
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve(null),
+        { enableHighAccuracy: true, timeout: 8000 }
       );
-    }
+    });
+  };
+
+  useEffect(() => {
+    // Intento anticipado de captura GPS al abrir la vista
+    obtenerPosicionGps().then((pos) => {
+      if (pos) setCoords(pos);
+    });
 
     // Intentar enriquecer con datos frescos del servidor si hay red
     api
@@ -77,16 +89,36 @@ export const EmergencyView: React.FC = () => {
     }
   };
 
-  const whatsappUrl = (() => {
-    const tel = (perfil?.contacto_emergencia_tel || '').replace(/\D/g, '');
-    const mapsLink = coords
-      ? `https://maps.google.com/?q=${coords.lat},${coords.lng}`
-      : 'Ubicación GPS no autorizada';
+  const handleAlertaWhatsApp = async () => {
+    setObteniendoGps(true);
+    let ubicacion = coords;
+
+    // Si aún no tenemos la ubicación, solicitarla en tiempo real al tocar el botón
+    if (!ubicacion) {
+      ubicacion = await obtenerPosicionGps();
+      if (ubicacion) {
+        setCoords(ubicacion);
+      }
+    }
+    setObteniendoGps(false);
+
+    let tel = (perfil?.contacto_emergencia_tel || '').replace(/\D/g, '');
+    // Si tiene 10 dígitos (formato estándar México / local), añadir prefijo internacional 52
+    if (tel.length === 10) {
+      tel = `52${tel}`;
+    }
+
+    const mapsLink = ubicacion
+      ? `https://maps.google.com/?q=${ubicacion.lat},${ubicacion.lng}`
+      : 'Ubicación GPS no disponible (permiso denegado)';
+
     const texto = encodeURIComponent(
-      `🚨 EMERGENCIA MÉDICA KUXTAL (${perfil?.nombre || 'Paciente'}). Ubicación: ${mapsLink}`
+      `🚨 EMERGENCIA MÉDICA KUXTAL (${perfil?.nombre || 'Paciente'}). Ubicación en tiempo real: ${mapsLink}`
     );
-    return `https://wa.me/${tel}?text=${texto}`;
-  })();
+
+    const url = `https://wa.me/${tel}?text=${texto}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white pb-12">
@@ -131,15 +163,24 @@ export const EmergencyView: React.FC = () => {
           </a>
 
           {perfil?.contacto_emergencia_tel && (
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex min-h-16 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 px-5 py-4 text-center text-sm font-black text-white shadow-lg transition hover:bg-emerald-500"
+            <button
+              type="button"
+              disabled={obteniendoGps}
+              onClick={handleAlertaWhatsApp}
+              className="flex min-h-16 items-center justify-center gap-2.5 rounded-2xl bg-emerald-600 px-5 py-4 text-center text-sm font-black text-white shadow-lg transition hover:bg-emerald-500 disabled:opacity-75"
             >
-              <MapPin className="h-6 w-6 shrink-0" />
-              ALERTA GPS A {perfil.contacto_emergencia_nombre?.toUpperCase() || 'CONTACTO'}
-            </a>
+              {obteniendoGps ? (
+                <>
+                  <Loader2 className="h-6 w-6 shrink-0 animate-spin" />
+                  <span>OBTENIENDO GPS...</span>
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-6 w-6 shrink-0" />
+                  <span>ALERTA GPS A {perfil.contacto_emergencia_nombre?.toUpperCase() || 'CONTACTO'}</span>
+                </>
+              )}
+            </button>
           )}
         </div>
 

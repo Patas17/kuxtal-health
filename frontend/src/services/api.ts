@@ -61,6 +61,18 @@ export const api = {
     }
   },
 
+  async updatePerfil(uuid: string, updates: Partial<UsuarioPerfil>): Promise<UsuarioPerfil> {
+    const res = await fetch(`${API_URL}/api/v1/perfil/${uuid}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    if (!res.ok) throw new Error('Error actualizando perfil');
+    const updated: UsuarioPerfil = await res.json();
+    await db.perfil.put(updated);
+    return updated;
+  },
+
   async getBitacora(uuid: string = DEMO_UUID): Promise<BitacoraItem[]> {
     try {
       const res = await fetch(`${API_URL}/api/v1/bitacora/${uuid}`);

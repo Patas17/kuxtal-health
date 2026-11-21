@@ -130,7 +130,9 @@ export const Dashboard: React.FC = () => {
           </div>
         ) : (
           <>
-            {tabActiva === 'qr' && <QRCard perfil={perfil} />}
+            {tabActiva === 'qr' && (
+              <QRCard perfil={perfil} onPerfilActualizado={setPerfil} />
+            )}
             {tabActiva === 'triaje' && <TriajeForm uuid={perfil.id} />}
             {tabActiva === 'bitacora' && (
               <BitacoraList

@@ -1,16 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { ShieldAlert, Download, ExternalLink, HeartPulse, Phone, AlertTriangle } from 'lucide-react';
+import { ShieldAlert, Download, ExternalLink, HeartPulse, Phone, AlertTriangle, Edit3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { UsuarioPerfil } from '../types';
 import { encodeVitalData } from '../services/api';
+import { ProfileEditor } from './ProfileEditor';
 
 interface Props {
   perfil: UsuarioPerfil;
+  onPerfilActualizado?: (p: UsuarioPerfil) => void;
 }
 
-export const QRCard: React.FC<Props> = ({ perfil }) => {
+export const QRCard: React.FC<Props> = ({ perfil, onPerfilActualizado }) => {
   const qrWrapperRef = useRef<HTMLDivElement>(null);
+  const [editando, setEditando] = useState(false);
 
   const encodedData = encodeVitalData(perfil);
   const sosRelativeUrl = `/sos/${perfil.id}?data=${encodedData}`;
@@ -78,9 +81,17 @@ export const QRCard: React.FC<Props> = ({ perfil }) => {
       <div className="rounded-2xl border-2 border-red-600 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4">
           <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase text-red-700">
-              <HeartPulse className="h-3.5 w-3.5" /> Ficha Vital Activa
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-xs font-bold uppercase text-red-700">
+                <HeartPulse className="h-3.5 w-3.5" /> Ficha Vital Activa
+              </span>
+              <button
+                onClick={() => setEditando(true)}
+                className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-200"
+              >
+                <Edit3 className="h-3 w-3" /> Editar
+              </button>
+            </div>
             <h2 className="mt-2 text-2xl font-extrabold text-slate-900">{perfil.nombre}</h2>
             <p className="text-sm text-slate-500">{perfil.edad} años</p>
           </div>
@@ -150,6 +161,16 @@ export const QRCard: React.FC<Props> = ({ perfil }) => {
           </Link>
         </div>
       </div>
+
+      {editando && (
+        <ProfileEditor
+          perfil={perfil}
+          onGuardado={(actualizado) => {
+            if (onPerfilActualizado) onPerfilActualizado(actualizado);
+          }}
+          onCerrar={() => setEditando(false)}
+        />
+      )}
     </div>
   );
 };
